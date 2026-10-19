@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memory-core"
+version = "0.1.0"
+description = "Self-hosted clone of Amazon Bedrock AgentCore Memory"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic-settings",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "httpx", "ruff"]
+
+[tool.setuptools]
+packages = ["memory_agent"]
+
+[tool.setuptools.package-data]
+memory_agent = ["schema.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+# Policy validation runs inside pydantic validators, which only turn ValueError into a 400.
+ignore = ["TRY004"]
