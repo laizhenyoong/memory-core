@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from memory_agent import db
+from memory_agent import auth, control, db
 from memory_agent.config import Settings
 from memory_agent.errors import ApiError, BadRequest
 
@@ -15,11 +15,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         db.init_db(settings.db_path)
+        conn = db.connect(settings.db_path)
+        try:
+            generated_key = auth.bootstrap_admin(conn, settings.admin_key)
+        finally:
+            conn.close()
+        if generated_key:
+            print(f"Admin API key (shown once, store it now): {generated_key}", flush=True)
         yield
 
     app = FastAPI(title="memory-core", lifespan=lifespan)
     app.state.settings = settings
     _install_error_handlers(app)
+    app.include_router(control.router)
 
     @app.get("/health")
     def health() -> dict:
